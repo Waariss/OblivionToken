@@ -25,7 +25,7 @@ Binary-only distribution. No source code is included in this repository. Release
 - **Evidence Output:** – Prints access and refresh tokens, scope summaries, and optional `/me` context.
 - **Token-centric orchestration:** for repeatable CAP bypass experiments.
 - **First-Party App Support:** Compatible with Microsoft’s built-in and first-party applications.
-- **Graph API Integration:** Emits valid OIDC ID tokens and OAuth2 access tokens for use with Microsoft Graph API.
+- **Graph API Integration:** Emits valid OIDC ID tokens and OAuth2 access tokens for use with Microsoft Graph API post-exploitation automation (Especially beneficial convenient for Microsoft Graph PowerShell module and GraphRunner offensive tool).
 - **Ethical & Verifiable Use:** Designed for authorized testing, with transparent, reproducible results.
 
 ## Installation
