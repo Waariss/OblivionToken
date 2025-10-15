@@ -58,6 +58,8 @@ Powered by : Vanitas & Mittcheng
 ### Baseline Authorization (No MFA)
 Provide the requested username and password (unless stored in `creds.json`), select a client profile.
 
+https://github.com/user-attachments/assets/65f136d0-93e7-4d74-92c4-d3c363f5c93d
+
 ```powershell
 Enter username (UPN/email): user@tenant
 Enter password: 
@@ -74,6 +76,8 @@ Enter number: 2
 ```
 ### MFA Authorization
 Provide the requested username and password (unless stored in `creds.json`), select a client profile, and follow any MFA instructions.
+
+https://github.com/user-attachments/assets/0379ea97-ebdc-42da-9ab1-8889a51cd0a8
 
 ```powershell
 Enter username (UPN/email): user@tenant
@@ -222,7 +226,7 @@ Get-MgContext
 This project is licensed under Apache License 2.0.
 
 ## Changelog
-### v1.1 – (Tentative October 17, 2025)
+### v1.1 – October 15, 2025
 - Add video demonstration of the unpublic application (In-progress on Microsoft Security Response Center (MSRC) vulnerability investigation process).  
 
 ### v1.0 – October 13, 2025
