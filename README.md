@@ -74,6 +74,7 @@ Select Target Clients:
 
 Enter number: 2
 ```
+
 ### MFA Authorization
 Provide the requested username and password (unless stored in `creds.json`), select a client profile, and follow any MFA instructions.
 
@@ -138,6 +139,35 @@ Choose Authentication Method:
 
 Enter number: 3
 Enter 6-digit SMS Verification Code: 112233
+```
+
+### User-Agent Selection (Optional)
+
+This feature is **optional** and primarily intended for advanced research scenarios. 
+By default, Oblivion Token uses a **standard Windows/Edge User-Agent** string for all authorization flows.  
+Operators may override this behavior to emulate specific devices or browsers when testing Conditional Access Policy reactions to different client signals.
+
+- `--device` picks a built-in platform signature (default `Windows`).
+- `--browser` swaps the browser fingerprint for that device (defaults to the common choice per platform).
+- `--user-agent` accepts a full custom string when you need an exact header.
+- `--list-user-agents` prints every device/browser combination and their corresponding strings, then exits.
+- Example: `OblivionToken.exe --device Mac --browser Safari`
+
+```powershell
+PS C:\OblivionToken> .\OblivionToken.exe -h
+usage: OblivionToken.exe [-h] [--user-agent USER_AGENT_OVERRIDE] [--device DEVICE] [--browser BROWSER] [--list-user-agents]
+
+Conditional Access Bypass Research Tool
+
+options:
+  -h, --help            show this help message and exit
+  --user-agent USER_AGENT_OVERRIDE
+                        Override the User-Agent string explicitly.
+  --device DEVICE       User-Agent device profile (default: Windows). Options: Mac, Windows, AndroidMobile, iPhone, Linux, OS/2, PlayStation. Use
+                        --list-user-agents for mappings.
+  --browser BROWSER     User-Agent browser signature. Defaults to the common browser for the selected device. Options: Android, IE, Chrome, Firefox,
+                        Edge, Safari.
+  --list-user-agents    Print available device/browser combinations and exit.
 ```
 
 ## Token Redemption Example
@@ -219,13 +249,18 @@ Get-MgContext
 - Console transcripts expose raw tokens; capture and store them only when policy permits and sanitize afterward.
 
 ## Future Work
-- Phishing-aligned data collection helpers tailored to Conditional Access campaigns.
-- Operator flag to override the default desktop User-Agent signature for research variations.
+- Evilginx-based integration for data collection helpers aligned with credential phishing campaigns, tailored for Conditional Access Bypass feature.
 
 ## License
 This project is licensed under Apache License 2.0.
 
 ## Changelog
+
+### v1.2 – October 24, 2025
+- Added **optional User-Agent override and selection feature** for advanced research use (`--user-agent`, `--device`, `--browser`, `--list-user-agents`).
+- This feature allows operators to emulate various platform and browser combinations when evaluating Conditional Access policy behavior.
+- The default behavior remains unchanged. If no flags are provided, the tool uses the standard Windows/Edge User-Agent for stable testing.
+
 ### v1.1 – October 15, 2025
 - Add video demonstration of the unpublic application (In-progress on Microsoft Security Response Center (MSRC) vulnerability investigation process).  
 
@@ -244,5 +279,3 @@ This project is licensed under Apache License 2.0.
 
 ## Disclaimer
 Oblivion Token is intended strictly for authorized assessments and responsible security research; use only in environments where you have explicit permission.
-
-
