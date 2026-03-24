@@ -1,46 +1,50 @@
+cat OblivionToken-Dev/README.md 
 <h1 align="center">Oblivion Token</h1>
 <p align="center"><i>M365 Conditional Access Policy Bypass OST (Offensive Tooling) Powered by : Vanitas & Mittcheng</i></p>
 <p align="center">
-<img alt="Static Badge" src="https://img.shields.io/badge/Windows-Intel%2Fx86-blue?logo=windows">
-<img alt="Static Badge" src="https://img.shields.io/badge/Windows-ARM-blue?logo=windows">
-<img alt="Static Badge" src="https://img.shields.io/badge/Distribution-Binary--only-black">
+  <img alt="Black Hat Asia Arsenal 2026" src="https://img.shields.io/badge/BLACK%20HAT%20ASIA-ARSENAL%202026-00a8cc?style=for-the-badge&labelColor=000000&color=00a8cc">
+  <img alt="DEF CON Singapore 2026 Demo Labs" src="https://img.shields.io/badge/DEF%20CON%20SINGAPORE-DEMO%20LABS%202026-f28c28?style=for-the-badge&labelColor=000000&color=f28c28">
 </p>
 
-<img src="./media/Oblivion-Token.png">
+<div align="center">
+  <img src="media/Oblivion-Token-Logo.jpg" style="width: 40%;">
+</div>
 
 ## Overview
 Oblivion Token is a focused offensive-research utility that makes Microsoft 365 Conditional Access Policy (CAP) bypass testing practical, repeatable, and scriptable. Designed for red-teamers and security researchers, it systematizes token-centric workflows and exercises policy edge cases to expose where device, network, or app-context assumptions fail including realistic test paths against Microsoft first-party (built-in) applications.
 
 The tool issues legitimate OpenID Connect (OIDC) ID tokens and OAuth2 access tokens that are directly consumable by Microsoft Graph API endpoints, and it integrates seamlessly with Microsoft Graph PowerShell and GraphRunner for scripted verification, automation, and post-exploitation actions via M365 target tenants.
 
-Binary-only distribution. No source code is included in this repository. Release artifacts include a Windows executable (`OblivionToken.exe`).
+Source distribution. This repository includes `OblivionToken.py` and supporting configuration files for authorized research use.
 
-> **Support Scope:** Oblivion Token exclusively targets Microsoft Graph API resources and scopes. Non-Graph APIs (for example, Azure Management or Intune admin endpoints) are out of scope.
+> **Safety/Scope:** Oblivion Token is for **authorized testing only** with explicit permission.  
+> **Scope Limitation:** Research and token workflows in this project are limited to **Microsoft Graph API resources/scopes**. Non-Graph APIs (for example, Azure Management or Intune admin endpoints) are out of scope.
 
+## Quick Start
+
+```powershell
+PS C:\OblivionToken> python3 -m pip install --upgrade pip
+PS C:\OblivionToken> python3 -m pip install -r requirements.txt
+PS C:\OblivionToken> python3 .\OblivionToken.py
+```
 ## Features and Key capabilities
-- **Authorization Orchestration:** – Manages desktop-equivalent redirects and preserves session continuity.
-- **Client Profile Catalog:** – Reads tenant-ready registrations from `clients.json` with optional scope overrides.
-- **Credential Flexibility:** – Supports interactive prompts or sanctioned secrets in `creds.json`.
-- **Adaptive MFA Handling:** – Guides MFA Push Notification, Microsoft Authenticator OTP, and SMS Verifications until completion or timeout.
-- **Evidence Output:** – Prints access and refresh tokens, scope summaries, and optional `/me` context.
+- **Authorization Orchestration:** Manages desktop-equivalent redirects and preserves session continuity.
+- **Client Profile Catalog:** Reads tenant-ready registrations from `clients.json` with optional scope overrides.
+- **Credential Flexibility:** Supports interactive prompts or sanctioned secrets in `creds.json`.
+- **Adaptive MFA Handling:** Guides MFA Push Notification, Microsoft Authenticator OTP, and SMS Verifications until completion or timeout.
+- **Evidence Output:** Prints access and refresh tokens, scope summaries, and optional `/me` context.
 - **Token-centric orchestration:** for repeatable CAP bypass experiments.
 - **First-Party App Support:** Compatible with Microsoft’s built-in and first-party applications.
 - **Graph API Integration:** Emits valid OIDC ID tokens and OAuth2 access tokens for use with Microsoft Graph API post-exploitation automation (Especially beneficial convenient for Microsoft Graph PowerShell module and GraphRunner offensive tool).
 - **Ethical & Verifiable Use:** Designed for authorized testing, with transparent, reproducible results.
 
-## Installation
-
-### Use a Release
-
-Pre built x64/ARM binaries are in the release directory.
-
 ## Usage
 ### Prerequisites
-- Windows 10/11 host with outbound access to Microsoft identity and Microsoft Graph endpoints.
-- `clients.json` populated with tenant-approved registrations and stored beside the executable or Python script.
+- Machine host with outbound access to Microsoft identity and Microsoft Graph endpoints.
+- `clients.json` populated with tenant-approved registrations and stored beside `OblivionToken.py`.
 - Optional `creds.json` containing sanctioned credentials for unattended lab runs.
 ```powershell
-PS C:\OblivionToken> .\OblivionToken.exe
+PS C:\OblivionToken> python3 .\OblivionToken.py
 
   /$$$$$$  /$$       /$$ /$$            /$$                           /$$$$$$$$        /$$
  /$$__  $$| $$      | $$|__/           |__/                          |__  $$__/       | $$
@@ -151,11 +155,11 @@ Operators may override this behavior to emulate specific devices or browsers whe
 - `--browser` swaps the browser fingerprint for that device (defaults to the common choice per platform).
 - `--user-agent` accepts a full custom string when you need an exact header.
 - `--list-user-agents` prints every device/browser combination and their corresponding strings, then exits.
-- Example: `OblivionToken.exe --device Mac --browser Safari`
+- Example: `python3 OblivionToken.py --device Mac --browser Safari`
 
 ```powershell
-PS C:\OblivionToken> .\OblivionToken.exe -h
-usage: OblivionToken.exe [-h] [--user-agent USER_AGENT_OVERRIDE] [--device DEVICE] [--browser BROWSER] [--list-user-agents]
+PS C:\OblivionToken> python3 .\OblivionToken.py -h
+usage: OblivionToken.py [-h] [--user-agent USER_AGENT_OVERRIDE] [--device DEVICE] [--browser BROWSER] [--list-user-agents]
 
 Conditional Access Bypass Research Tool
 
@@ -189,7 +193,7 @@ Client: Microsoft Intune Company Portal
 AppId: 9ba1a5c7-f17a-4de9-a1f1-6178c8d51223
 Scope: email openid profile https://graph.microsoft.com/Organization.Read.All https://graph.microsoft.com/UserAuthenticationMethod.Read https://graph.microsoft.com/UserAuthenticationMethod.ReadWrite https://graph.microsoft.com/.default
 
-[*] Current User Informations:
+[*] Current User Information:
 
 {
   "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users/$entity",
@@ -210,8 +214,7 @@ Scope: email openid profile https://graph.microsoft.com/Organization.Read.All ht
 | `name`         | Yes      | Friendly display name presented to the operator. |
 | `client_id`    | Yes      | Application (client) ID registered within Microsoft Entra ID. |
 | `redirect_uri` | Yes      | Redirect URI approved for the registration and authorization grant. |
-| `scope`        | No       | Space-delimited scope string; defaults to Microsoft Graph delegated access. |
-| `resource`     | No       | Optional resource identifier for legacy consent scenarios. |
+| `scope`        | No       | Space-delimited scope string; defaults to `openid offline_access`. |
 
 Example:
 ```json
@@ -243,7 +246,7 @@ Get-MgContext
 ```
 
 ## Important Notes
-- Enforce least-privilege access on executables, JSON files, and logs that contain bearer tokens.
+- Enforce least-privilege access on scripts, JSON files, and logs that contain bearer tokens.
 - Ensure host clocks, DNS, and outbound routes align with Microsoft identity services to avoid false negatives.
 - Oblivion Token is optimized for Microsoft Graph; other cloud APIs may impose additional consent or policy controls.
 - Console transcripts expose raw tokens; capture and store them only when policy permits and sanitize afterward.
@@ -255,14 +258,24 @@ Get-MgContext
 This project is licensed under Apache License 2.0.
 
 ## Changelog
+### v1.4 – March 24, 2026
+- Transitioned repository distribution from bundled binaries to source-first delivery.
+- Added `OblivionToken.py` and `requirements.txt` to the repository root.
+- Updated installation and usage examples to Python execution mode.
 
-### v1.2 – October 24, 2025
+### v1.3 – January 23, 2026
+- Refined the authentication pipeline and MFA orchestration into a cleaner modular flow for better reliability and maintainability.
+- Improved resilience in interstitial/redirect handling and token extraction across varied sign-in responses.
+- Enhanced validation and error handling for configuration loading and MFA code input (OTP/SMS format checks).
+- Standardized endpoint/constants usage and polished output messaging for a more consistent operator experience.
+
+### v1.2 – October 25, 2025
 - Added **optional User-Agent override and selection feature** for advanced research use (`--user-agent`, `--device`, `--browser`, `--list-user-agents`).
 - This feature allows operators to emulate various platform and browser combinations when evaluating Conditional Access policy behavior.
 - The default behavior remains unchanged. If no flags are provided, the tool uses the standard Windows/Edge User-Agent for stable testing.
 
 ### v1.1 – October 15, 2025
-- Add video demonstration of the unpublic application (In-progress on Microsoft Security Response Center (MSRC) vulnerability investigation process).  
+- Added a video demonstration of the unpublished application (in progress as part of the Microsoft Security Response Center (MSRC) vulnerability investigation process).
 
 ### v1.0 – October 13, 2025
 - Initial repository creation and documentation setup.  
