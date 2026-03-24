@@ -61,7 +61,7 @@ Powered by : Vanitas & Mittcheng
 ### Baseline Authorization (No MFA)
 Provide the requested username and password (unless stored in `creds.json`), select a client profile.
 
-https://github.com/user-attachments/assets/65f136d0-93e7-4d74-92c4-d3c363f5c93d
+https://github.com/user-attachments/assets/b09be626-e40f-4c27-9467-83d0b8b5ff3d
 
 ```powershell
 Enter username (UPN/email): user@tenant
@@ -81,7 +81,7 @@ Enter number: 2
 ### MFA Authorization
 Provide the requested username and password (unless stored in `creds.json`), select a client profile, and follow any MFA instructions.
 
-https://github.com/user-attachments/assets/0379ea97-ebdc-42da-9ab1-8889a51cd0a8
+https://github.com/user-attachments/assets/bc20e2aa-7891-4029-b2c4-bdc6e9770598
 
 ```powershell
 Enter username (UPN/email): user@tenant
