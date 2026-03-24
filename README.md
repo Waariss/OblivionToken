@@ -1,4 +1,3 @@
-cat OblivionToken-Dev/README.md 
 <h1 align="center">Oblivion Token</h1>
 <p align="center"><i>M365 Conditional Access Policy Bypass OST (Offensive Tooling) Powered by : Vanitas & Mittcheng</i></p>
 <p align="center">
