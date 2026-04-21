@@ -32,6 +32,7 @@ PS C:\OblivionToken> python3 .\OblivionToken.py
 - **Credential Flexibility:** Supports interactive prompts or sanctioned secrets in `creds.json`.
 - **Adaptive MFA Handling:** Guides MFA Push Notification, Microsoft Authenticator OTP, and SMS Verifications until completion or timeout.
 - **Evidence Output:** Prints access and refresh tokens, scope summaries, and optional `/me` context.
+- **Refresh Token Redemption:** Redeems an existing refresh token against a selected target client or a custom Client ID.
 - **Token-centric orchestration:** for repeatable CAP bypass experiments.
 - **First-Party App Support:** Compatible with Microsoft’s built-in and first-party applications.
 - **Graph API Integration:** Emits valid OIDC ID tokens and OAuth2 access tokens for use with Microsoft Graph API post-exploitation automation (Especially beneficial convenient for Microsoft Graph PowerShell module and GraphRunner offensive tool).
@@ -159,18 +160,85 @@ Operators may override this behavior to emulate specific devices or browsers whe
 ```powershell
 PS C:\OblivionToken> python3 .\OblivionToken.py -h
 usage: OblivionToken.py [-h] [--user-agent USER_AGENT_OVERRIDE] [--device DEVICE] [--browser BROWSER] [--list-user-agents]
+                        [--refresh-token REFRESH_TOKEN_VALUE]
 
-Conditional Access Bypass Research Tool
+Oblivion Token: M365 Conditional Access Policy Bypass Research Tool
 
 options:
   -h, --help            show this help message and exit
   --user-agent USER_AGENT_OVERRIDE
                         Override the User-Agent string explicitly.
-  --device DEVICE       User-Agent device profile (default: Windows). Options: Mac, Windows, AndroidMobile, iPhone, Linux, OS/2, PlayStation. Use
-                        --list-user-agents for mappings.
-  --browser BROWSER     User-Agent browser signature. Defaults to the common browser for the selected device. Options: Android, IE, Chrome, Firefox,
-                        Edge, Safari.
+  --device DEVICE       User-Agent device profile (default: Windows). Options: Mac, Windows, AndroidMobile, iPhone, Linux, OS/2,
+                        PlayStation. Use --list-user-agents for mappings.
+  --browser BROWSER     User-Agent browser signature. Defaults to the common browser for the selected device. Options: Android,
+                        IE, Chrome, Firefox, Edge, Safari.
   --list-user-agents    Print available device/browser combinations and exit.
+  --refresh-token REFRESH_TOKEN_VALUE
+                        Redeem an existing refresh token using <token>, /path/to/file, or refresh_token=<token>.
+```
+
+### Refresh Token Redemption (Optional)
+
+Use refresh-token mode when you already have a refresh token and want to redeem it against a selected target profile from `clients.json` or a custom Client ID.
+
+- `--refresh-token <token>` accepts a raw refresh token directly.
+- `--refresh-token /path/to/token.txt` loads the refresh token from a local file.
+- `--refresh-token refresh_token=<token>` is also supported for compatibility with copy-pasted parameter strings.
+- In refresh-token mode, the tool prompts you to choose a target client from `clients.json` or enter a custom Client ID.
+- FOCI details are printed only when the token response includes a `foci` indicator.
+
+```powershell
+PS C:\OblivionToken> python3 .\OblivionToken.py --refresh-token 1.ASYA...
+Select Target Clients for Refresh Token Redemption:
+  1) Microsoft Intune Company Portal
+  2) Microsoft Authenticator App
+  3) ZTNA Network Access Client
+  4) ZTNA Network Access Client -- Private
+  5) ZTNA Network Access Client -- M365
+  6) UnPublic App [1]
+  7) UnPublic App [2]
+  8) Custom Client ID
+
+Enter number: 8
+Enter Client ID: 8ec6bc83-69c8-4392-8f08-b3c986009232
+```
+
+Example success summary with FOCI:
+
+```text
+======= Successfully Redeemed Tokens =======
+
+[*] MS Graph API Access Token:
+
+eyJ0eXAiOiJ...<snip>
+
+[*] Refresh Token:
+
+1.ASYAn98Rj...<snip>
+
+=========== Oblivion Token Result ===========
+
+Status: SUCCESS
+Client: Microsoft Authenticator App
+AppId: 4813382a-8fa7-425e-ab75-3b753aab3abb
+Scope: openid offline_access
+FOCI: Present
+Family Refresh Token: Supported by token response
+
+=============================================
+```
+
+Example failure summary:
+
+```text
+=========== Oblivion Token Result ===========
+
+Status: FAILED - Refresh token redemption rejected
+Client: Custom Client ID
+AppId: 8ec6bc83-69c8-4392-8f08-b3c986009232
+Reason: Provided grant is invalid or malformed.
+
+=============================================
 ```
 
 ## Token Redemption Example
@@ -227,7 +295,7 @@ Example:
 ```
 
 ### Credential Profiles (`creds.json`)
-`creds.json` provides optional credential reuse:
+`creds.json` provides optional credential reuse for interactive sign-in:
 ```json
 {
   "username": "user@tenant",
@@ -257,6 +325,11 @@ Get-MgContext
 This project is licensed under Apache License 2.0.
 
 ## Changelog
+### v1.5 – April 21, 2026
+- Added `--refresh-token` mode to redeem an existing refresh token against a selected target profile or a custom Client ID.
+- Supported refresh-token input as a raw token string, a file path, or `refresh_token=<token>` compatibility format.
+- Added compact refresh-token redemption success and failure summaries, including FOCI indicator reporting when present in the token response.
+
 ### v1.4 – March 24, 2026
 - Transitioned repository distribution from bundled binaries to source-first delivery.
 - Added `OblivionToken.py` and `requirements.txt` to the repository root.

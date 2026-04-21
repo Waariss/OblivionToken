@@ -7,6 +7,7 @@ Authors: Vanitas & Mittcheng
 import argparse
 import getpass
 import json
+import os
 import re
 import sys
 import time
@@ -40,6 +41,7 @@ SAS_END_AUTH_URL = "https://login.microsoftonline.com/common/SAS/EndAuth"
 SAS_PROCESS_AUTH_URL = "https://login.microsoftonline.com/common/SAS/ProcessAuth"
 APP_VERIFY_URL = "https://login.microsoftonline.com/appverify"
 GRAPH_ME_URL = "https://graph.microsoft.com/v1.0/me"
+REFRESH_TOKEN_SCOPE = "openid offline_access"
 
 DEFAULT_DEVICE = "Windows"
 DEFAULT_BROWSER = "Edge"
@@ -201,6 +203,28 @@ def load_credentials(path: str) -> Tuple[Optional[str], Optional[str]]:
         return None, None
 
 
+def resolve_refresh_token_argument(value: str) -> str:
+    """Parses a raw token, a file path, or refresh_token=<value>."""
+    normalized = value.strip()
+    prefix = "refresh_token="
+    if normalized.startswith(prefix):
+        normalized = normalized[len(prefix):].strip()
+
+    if not normalized:
+        return ""
+
+    expanded_path = os.path.expanduser(normalized)
+    if os.path.isfile(expanded_path):
+        try:
+            with open(expanded_path, "r", encoding="utf-8") as f:
+                return "".join(f.read().split())
+        except OSError as e:
+            print(f"[!] Failed to read refresh token file: {e}")
+            sys.exit(1)
+
+    return "".join(normalized.split())
+
+
 def get_authorize(session: requests.Session, client: Client) -> Tuple[requests.Response, str]:
     """Initiates OAuth authorization flow."""
     params = {
@@ -349,6 +373,63 @@ def exchange_code_for_tokens(session: requests.Session, client: Client, code: st
     return r.json()
 
 
+def redeem_refresh_token(session: requests.Session, client: Client, refresh_token: str) -> Dict:
+    """Redeems an existing refresh token for a target client."""
+    data = {
+        "client_id": client.client_id,
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "scope": REFRESH_TOKEN_SCOPE,
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    r = session.post(TOKEN_ENDPOINT, data=data, headers=headers)
+    r.raise_for_status()
+    return r.json()
+
+
+def describe_token_error(exc: requests.HTTPError) -> str:
+    """Extracts the most useful token endpoint error details."""
+    response = exc.response
+    if response is None:
+        return str(exc)
+
+    try:
+        error_data = response.json()
+    except ValueError:
+        text = (response.text or "").strip()
+        return text or f"HTTP {response.status_code}"
+
+    error_code = error_data.get("error", "unknown_error")
+    description = error_data.get("error_description", "").strip()
+    if description:
+        return f"{error_code}: {description}"
+    return error_code
+
+
+def parse_token_error_details(error_text: str) -> Tuple[str, Optional[str], str]:
+    """Splits token endpoint errors into OAuth error, AADSTS code, and a concise message."""
+    normalized = " ".join(error_text.split())
+
+    oauth_error = "unknown_error"
+    message = normalized
+    if ":" in normalized:
+        oauth_error, message = normalized.split(":", 1)
+        oauth_error = oauth_error.strip() or oauth_error
+        message = message.strip() or normalized
+
+    aadsts_code = None
+    aadsts_match = re.search(r"\b(AADSTS\d+)\b", message)
+    if aadsts_match:
+        aadsts_code = aadsts_match.group(1)
+        message = message.replace(aadsts_code + ":", "", 1).strip()
+
+    trace_match = re.search(r"\bTrace ID:", message)
+    if trace_match:
+        message = message[:trace_match.start()].strip()
+
+    return oauth_error, aadsts_code, message or normalized
+
+
 def call_graph_me(access_token: str, session: Optional[requests.Session] = None) -> Optional[Dict]:
     """Calls Microsoft Graph API /me endpoint to verify token and retrieve user info."""
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -382,6 +463,37 @@ def select_client_interactive(clients: Dict[int, Client]) -> Tuple[int, Client]:
         print("Invalid choice. Try again.")
 
 
+def select_refresh_target_interactive(clients: Dict[int, Client]) -> Client:
+    """Prompts for a refresh token redemption target or a custom client ID."""
+    print("Select Refresh Token Target:")
+    for idx, client in clients.items():
+        print(f"  {idx}) {client.name}")
+    custom_idx = len(clients) + 1
+    print(f"  {custom_idx}) Custom Client ID")
+
+    while True:
+        choice = input("\nEnter number: ").strip()
+        if not choice.isdigit():
+            print("Please enter a valid number.")
+            continue
+
+        idx = int(choice)
+        if idx in clients:
+            return clients[idx]
+        if idx == custom_idx:
+            custom_client_id = input("Enter Client ID: ").strip()
+            if not custom_client_id:
+                print("[!] Client ID is required.")
+                continue
+            return Client(
+                name="Custom Client ID",
+                client_id=custom_client_id,
+                redirect_uri="",
+                scope=REFRESH_TOKEN_SCOPE,
+            )
+        print("Invalid choice. Try again.")
+
+
 def print_failure_result(client: Client, idx: int):
     """Prints failure result message."""
     print("\n=========== Oblivion Token Result ===========\n")
@@ -389,6 +501,60 @@ def print_failure_result(client: Client, idx: int):
     print(f"Client: {client.name}")
     print(f"AppId: {client.client_id}")
     print("Scope: -")
+    print("\n=============================================")
+
+
+def print_success_result(client: Client, tokens: Dict, session: requests.Session, *, show_foci: bool = False) -> None:
+    """Prints redeemed token material and a compact success summary."""
+    access_token = tokens.get("access_token")
+    refresh_token = tokens.get("refresh_token")
+
+    if not access_token:
+        print("[!] No access_token in response.")
+        sys.exit(4)
+
+    print("\n======= Successfully Redeemed Tokens =======")
+    print("\n[*] MS Graph API Access Token:\n")
+    print(access_token)
+
+    if refresh_token:
+        print("\n[*] Refresh Token:\n")
+        print(refresh_token)
+
+    me = call_graph_me(access_token, session=session)
+
+    print("\n=========== Oblivion Token Result ===========\n")
+    print("Status: SUCCESS")
+    print(f"Client: {client.name}")
+    print(f"AppId: {client.client_id}")
+    print(f"Scope: {tokens.get('scope') or client.scope}")
+    if show_foci:
+        foci_value = tokens.get("foci")
+        if foci_value == "1":
+            print("FOCI: Present")
+            print("Family Refresh Token: Supported by token response")
+        elif foci_value is not None:
+            print(f"FOCI: Present ({foci_value})")
+            print("Family Refresh Token: Response includes a FOCI indicator")
+
+    if me is not None:
+        print("\n[*] Current User Information:\n")
+        try:
+            print(json.dumps(me, indent=2))
+        except Exception:
+            print(me)
+
+    print("\n=============================================")
+
+
+def print_refresh_token_failure(client: Client, error_text: str) -> None:
+    """Prints a compact refresh-token redemption failure summary."""
+    oauth_error, aadsts_code, message = parse_token_error_details(error_text)
+    print("\n=========== Oblivion Token Result ===========\n")
+    print("Status: FAILED - Refresh token redemption rejected")
+    print(f"Client: {client.name}")
+    print(f"AppId: {client.client_id}")
+    print(f"Reason: {message}")
     print("\n=============================================")
 
 
@@ -633,7 +799,11 @@ def main():
         action="store_true",
         help="Print available device/browser combinations and exit.",
     )
-    
+    parser.add_argument(
+        "--refresh-token",
+        dest="refresh_token_value",
+        help="Redeem an existing refresh token using <token>, /path/to/file, or refresh_token=<token>.",
+    )
     args = parser.parse_args()
     
     if args.list_user_agents:
@@ -648,23 +818,6 @@ def main():
     except Exception as e:
         print(f"[!] Failed to load clients: {e}")
         sys.exit(1)
-    
-    # Load credentials
-    cfg_user, cfg_pass = load_credentials("creds.json")
-    
-    # Prompt for credentials if not in config
-    username = cfg_user or input("Enter username (UPN/email): ").strip()
-    if not username:
-        print("[!] Username is required.")
-        sys.exit(1)
-    
-    password = cfg_pass or getpass.getpass("Enter password: ")
-    if not password:
-        print("[!] Password is required.")
-        sys.exit(1)
-    
-    # Select target client
-    selected_idx, client = select_client_interactive(clients)
     
     # Configure User-Agent
     if args.user_agent_override:
@@ -683,6 +836,42 @@ def main():
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
     })
+
+    if args.refresh_token_value is not None:
+        refresh_token_value = resolve_refresh_token_argument(args.refresh_token_value) if isinstance(args.refresh_token_value, str) else ""
+        if not refresh_token_value:
+            print("[!] Refresh token is required. Use --refresh-token <token> or --refresh-token /path/to/file.")
+            sys.exit(1)
+
+        client = select_refresh_target_interactive(clients)
+        try:
+            tokens = redeem_refresh_token(sess, client, refresh_token_value)
+        except requests.HTTPError as e:
+            print_refresh_token_failure(client, describe_token_error(e))
+            sys.exit(3)
+        except requests.RequestException as e:
+            print_refresh_token_failure(client, str(e))
+            sys.exit(3)
+
+        print_success_result(client, tokens, sess, show_foci=True)
+        return
+
+    # Load credentials
+    cfg_user, cfg_pass = load_credentials("creds.json")
+    
+    # Prompt for credentials if not in config
+    username = cfg_user or input("Enter username (UPN/email): ").strip()
+    if not username:
+        print("[!] Username is required.")
+        sys.exit(1)
+    
+    password = cfg_pass or getpass.getpass("Enter password: ")
+    if not password:
+        print("[!] Password is required.")
+        sys.exit(1)
+    
+    # Select target client
+    selected_idx, client = select_client_interactive(clients)
     
     # Step 1: Initiate authorization
     try:
@@ -805,42 +994,7 @@ def main():
         print(f"[!] Token exchange failed: {e}")
         sys.exit(3)
     
-    access_token = tokens.get("access_token")
-    refresh_token = tokens.get("refresh_token")
-    
-    if not access_token:
-        print("[!] No access_token in response.")
-        sys.exit(4)
-    
-    # Display results
-    print("\n======= Successfully Redeemed Tokens =======")
-    print("\n[*] MS Graph API Access Token:\n")
-    print(access_token)
-    
-    if refresh_token:
-        print("\n[*] Refresh Token:\n")
-        print(refresh_token)
-    
-    # Verify token by calling Graph API
-    me = call_graph_me(access_token, session=sess)
-    
-    print("\n=========== Oblivion Token Result ===========\n")
-    print("Status: SUCCESS")
-    print(f"Client: {client.name}")
-    print(f"AppId: {client.client_id}")
-    
-    token_scope = tokens.get("scope") or client.scope
-    print(f"Scope: {token_scope}")
-    
-    if me is not None:
-        print("\n[*] Current User Information:\n")
-        try:
-            print(json.dumps(me, indent=2))
-        except Exception:
-            print(me)
-    
-    print("\n=============================================")
-
+    print_success_result(client, tokens, sess)
 
 if __name__ == "__main__":
     main()
