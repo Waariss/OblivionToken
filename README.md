@@ -24,7 +24,7 @@ Source distribution. This repository includes `OblivionToken.py` and supporting 
 ```powershell
 PS C:\OblivionToken> python3 -m pip install --upgrade pip
 PS C:\OblivionToken> python3 -m pip install -r requirements.txt
-PS C:\OblivionToken> python3 .\OblivionToken.py
+PS C:\OblivionToken> python3 OblivionToken.py
 ```
 ## Features and Key capabilities
 - **Authorization Orchestration:** Manages desktop-equivalent redirects and preserves session continuity.
@@ -44,7 +44,7 @@ PS C:\OblivionToken> python3 .\OblivionToken.py
 - `clients.json` populated with tenant-approved registrations and stored beside `OblivionToken.py`.
 - Optional `creds.json` containing sanctioned credentials for unattended lab runs.
 ```powershell
-PS C:\OblivionToken> python3 .\OblivionToken.py
+PS C:\OblivionToken> python3 OblivionToken.py
 
   /$$$$$$  /$$       /$$ /$$            /$$                           /$$$$$$$$        /$$
  /$$__  $$| $$      | $$|__/           |__/                          |__  $$__/       | $$
@@ -158,7 +158,7 @@ Operators may override this behavior to emulate specific devices or browsers whe
 - Example: `python3 OblivionToken.py --device Mac --browser Safari`
 
 ```powershell
-PS C:\OblivionToken> python3 .\OblivionToken.py -h
+PS C:\OblivionToken> python3 OblivionToken.py -h
 usage: OblivionToken.py [-h] [--user-agent USER_AGENT_OVERRIDE] [--device DEVICE] [--browser BROWSER] [--list-user-agents]
                         [--refresh-token REFRESH_TOKEN_VALUE]
 
@@ -188,7 +188,7 @@ Use refresh-token mode when you already have a refresh token and want to redeem 
 - FOCI details are printed only when the token response includes a `foci` indicator.
 
 ```powershell
-PS C:\OblivionToken> python3 .\OblivionToken.py --refresh-token 1.ASYA...
+PS C:\OblivionToken> python3 OblivionToken.py --refresh-token 1.ASYA...
 Select Target Clients for Refresh Token Redemption:
   1) Microsoft Intune Company Portal
   2) Microsoft Authenticator App
